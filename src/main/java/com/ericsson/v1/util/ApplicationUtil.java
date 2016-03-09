@@ -81,7 +81,9 @@ public class ApplicationUtil {
 	}
 	
 	public String getFileName() {
-		String excelFilePath = "C:\\Apps\\ericssonInternalApps\\utilizationApp\\src\\main\\resources\\Utilization Analysis.xls";
+		String excelFilePath = PropertyUtil.getInstance().getValue("excelFilePath");
+				//"C:\\Apps\\ericssonInternalApps\\utilizationApp\\src\\main\\resources\\Utilization Analysis.xls";
+		System.out.println("excelFilePath :"+excelFilePath);
 		return excelFilePath;
 	}
 }

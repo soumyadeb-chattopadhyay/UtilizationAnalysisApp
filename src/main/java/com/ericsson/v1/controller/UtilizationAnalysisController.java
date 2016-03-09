@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ericsson.v1.model.JobStageDTO;
 import com.ericsson.v1.model.MonthSubCdKey;
 import com.ericsson.v1.model.MonthSubCdTypeDTO;
 import com.ericsson.v1.model.ResourceUtilizationBaseData;
@@ -108,6 +109,15 @@ public class UtilizationAnalysisController {
 	     return "monthlyReport";
 	 }
 	 
+	 
+	 @RequestMapping(value = "/jobStageReportUrl", method = RequestMethod.GET)
+	    public String getJobStageReport(Model model, HttpServletRequest request, HttpServletResponse response) throws Throwable {
+		 
+		 List<JobStageDTO> jobStageDTOs = resourceUtilizationParserService.getJobStageWiseHoursCalculation();
+		 model.addAttribute("jobStageDTOs", jobStageDTOs);
+		 
+	     return "jobStageReport";
+	 }
 	 
 	 
 	

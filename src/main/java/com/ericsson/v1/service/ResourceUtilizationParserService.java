@@ -20,6 +20,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import com.ericsson.v1.model.JobStageDTO;
+import com.ericsson.v1.model.MonthCdKey;
 import com.ericsson.v1.model.MonthSubCdKey;
 import com.ericsson.v1.model.MonthSubCdTypeDTO;
 import com.ericsson.v1.model.ResourceUtilizationBaseData;
@@ -562,6 +564,86 @@ public class ResourceUtilizationParserService {
        
     return counter.getSeq();
   }*/
+	
+	public List<JobStageDTO> getJobStageWiseHoursCalculation() throws Throwable {
+		List<JobStageDTO> dtos = new ArrayList<JobStageDTO>();
+		
+		ApplicationUtil applicationUtil = new ApplicationUtil();
+		String excelFilePath = applicationUtil.getFileName();
+		
+		List<ResourceUtilizationBaseData> baseDatas = parse(excelFilePath);
+		
+		//Map<String, String> map =  resourceUtilizationParserService.gropuByEriproSubCDAndSubCdTypeMap();
+		//System.out.println(map);
+		
+		List<ResourceUtilizationBaseData> filteredBaseDatas = filterDataRNAMCAC(baseDatas);
+		Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = groupResourceUtilizationBaseDataByEriproSubCD(filteredBaseDatas);
+		
+		
+		Map<MonthCdKey,Double> map = groupResourceUtilizationBaseDataByEriproCDMonthJs(eriproSubCDGroupMap, "Job stage 4");
+
+		for(MonthCdKey  monthCdKey : map.keySet()) { 
+			JobStageDTO jobStageDTO = new JobStageDTO();  
+			jobStageDTO.setCd(monthCdKey.getDomain());
+			jobStageDTO.setMonth(monthCdKey.getMonth());
+			jobStageDTO.setTargetHours(map.get(monthCdKey));
+			dtos.add(jobStageDTO);
+		}
+		return dtos;
+	}
+	
+	
+	
+	
+	/* ***************Newly Written Code ****************** */
+	// key as CD and is vales list of ResourceUtilizationBaseData
+	
+	public Map<MonthCdKey,Double> groupResourceUtilizationBaseDataByEriproCDMonthJs(Map<String,List<ResourceUtilizationBaseData>> CdMap,String JobStage)
+	{
+		Map<MonthCdKey,Double> CdMonthTargetHoursMap=new HashMap<MonthCdKey,Double>();
+		Set<String> CdGroups=CdMap.keySet();
+		if(CdGroups!=null && !CdGroups.isEmpty())
+		{
+			for(String CdGroup :CdGroups)
+			{
+				List<ResourceUtilizationBaseData> domainValuesList=CdMap.get(CdGroup);
+				
+				if(domainValuesList!=null && !domainValuesList.isEmpty())
+				{
+					for(ResourceUtilizationBaseData DomainValue :domainValuesList)
+					{
+						
+						
+						if(JobStage.equalsIgnoreCase(String.valueOf(DomainValue.getGlobalJobStage())))
+						{
+						MonthCdKey month_cd_key=new MonthCdKey();
+						month_cd_key.setDomain(CdGroup);
+						month_cd_key.setMonth(DomainValue.getMonth());
+						if(CdMonthTargetHoursMap.get(month_cd_key)!=null)
+						{
+							Double tempRecordedHours=CdMonthTargetHoursMap.get(month_cd_key);
+							tempRecordedHours=tempRecordedHours+(Double)DomainValue.getTargetHours();
+							CdMonthTargetHoursMap.put(month_cd_key,tempRecordedHours);
+							
+						}
+						
+						else
+						{
+							Double tempRecordedHours=(Double) DomainValue.getTargetHours();
+							CdMonthTargetHoursMap.put(month_cd_key,tempRecordedHours);
+						}
+					}
+						
+						
+						
+					}
+				}
+			}
+		
+		}
+		return CdMonthTargetHoursMap;
+		
+	}
 	
 	
 	public static void main(String[] args) throws Exception {

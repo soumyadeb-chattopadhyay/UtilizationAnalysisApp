@@ -15,9 +15,13 @@ public class Application {
 
 	public static void main(String[] args) throws Exception
 	{
+		ApplicationUtil applicationUtil = new ApplicationUtil();
 		 // https://msr1980.wordpress.com/2015/01/02/happy-42005/
-		String excelFilePath = "C:\\Apps\\ericssonInternalApps\\utilizationApp\\src\\main\\resources\\Utilization Analysis.xls";
-			ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new ClassPathResource("spring-config.xml").getPath());
+		String excelFilePath = applicationUtil.getFileName();//"C:\\Apps\\ericssonInternalApps\\utilizationApp\\src\\main\\resources\\Utilization Analysis.xls";
+		
+		
+		
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new ClassPathResource("spring-config.xml").getPath());
 			//ApplicationContext context = new FileSystemXmlApplicationContext("C:\\Apps\\ericssonInternalApps\\utilizationApp\\src\\resources\\spring-config.xml");
 			//ResourceUtilizationParserServiceRepository utilizationParserServiceRepository = context.getBean(ResourceUtilizationParserServiceRepository.class);
 			
@@ -25,13 +29,13 @@ public class Application {
 			List<ResourceUtilizationBaseData> baseDatas = resourceUtilizationParserService.parse(excelFilePath);
 			System.out.println(baseDatas.size());
 			
-			Map<String, String> map =  resourceUtilizationParserService.gropuByEriproSubCDAndSubCdTypeMap();
-			System.out.println(map);
+			//Map<String, String> map =  resourceUtilizationParserService.gropuByEriproSubCDAndSubCdTypeMap();
+			//System.out.println(map);
 			
 			List<ResourceUtilizationBaseData> filteredBaseDatas = resourceUtilizationParserService.filterDataRNAMCAC(baseDatas);
 			Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = resourceUtilizationParserService.groupResourceUtilizationBaseDataByEriproSubCD(filteredBaseDatas);
 			
-			///System.out.println(eriproSubCDGroupMap.values());
+			System.out.println(eriproSubCDGroupMap.keySet());
 			//resourceUtilizationParserService.persist(baseDatas);
 			System.out.println(context);
 			//System.out.println(utilizationParserServiceRepository.findAll());
@@ -40,8 +44,8 @@ public class Application {
 			
 			//Map<String, Map<String, Double>>  map = resourceUtilizationParserService.groupResourceUtilizationBaseDataByYear(eriproSubCDGroupMap);
 			
-			Map<MonthSubCdKey, Map<String, Double>>  monthSubCdSubCdTypeKeyMap = resourceUtilizationParserService.groupResourceUtilizationBaseDataByMonth(eriproSubCDGroupMap);
-			System.out.println(monthSubCdSubCdTypeKeyMap);
+			//Map<MonthSubCdKey, Map<String, Double>>  monthSubCdSubCdTypeKeyMap = resourceUtilizationParserService.groupResourceUtilizationBaseDataByMonth(eriproSubCDGroupMap);
+			//System.out.println(monthSubCdSubCdTypeKeyMap);
 			
 			//Map<String, Map<String, Double>> monthAndSubCdTypeMap = resourceUtilizationParserService.groupResourceUtilizationBaseDataByMonthAndSubCdType(monthSubCdSubCdTypeKeyMap, "TV");
 			//System.out.println(monthAndSubCdTypeMap);

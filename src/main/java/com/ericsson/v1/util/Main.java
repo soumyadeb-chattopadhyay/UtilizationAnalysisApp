@@ -21,6 +21,9 @@ public class Main {
 		int j = i + 01;
 		
 		System.out.println(j);
+		
+		ApplicationUtil applicationUtil = new ApplicationUtil();
+		System.out.println(applicationUtil.getFileName());
 	}
 
 }
