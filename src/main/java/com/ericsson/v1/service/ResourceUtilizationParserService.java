@@ -5,12 +5,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -31,7 +34,9 @@ import com.ericsson.v1.util.PropertyUtil;
 
 @Service
 public class ResourceUtilizationParserService {
-
+	
+	 //private static final Logger log = Logger.getLogger(ResourceUtilizationParserService.class);
+	
 	//@Autowired
 	private ResourceUtilizationParserServiceRepository utilizationParserServiceRepository;
 	
@@ -45,11 +50,11 @@ public class ResourceUtilizationParserService {
 		}
 		
 	}
-	
+	/* returns a list of ResourceUtilizationBaseData objects returned by readResourceUtilizationBaseDataFromExcelFile() after reading from the excel file in the given path  */
 	public List<ResourceUtilizationBaseData> parse(String excelFilePath) throws Exception {
 		return readResourceUtilizationBaseDataFromExcelFile(excelFilePath);
 	}
-	
+	/* We are checking from the list of ResourceUtilizationBaseData obtained from the excel sheet whether Pool Name is "RNAM_CAC".If yes change eri pro subCD for that ResourceUtilizationBaseData object to "RNAM_CAC".Add these object to the list of filtered base data and return the list */
 	public List<ResourceUtilizationBaseData> filterDataRNAMCAC(List<ResourceUtilizationBaseData> baseDatas) {
 		 List<ResourceUtilizationBaseData> filteredBaseDatas = new ArrayList<ResourceUtilizationBaseData>();
 		 for(ResourceUtilizationBaseData data : baseDatas) {
@@ -57,7 +62,7 @@ public class ResourceUtilizationParserService {
 			
 			 if(poolName != null) {
 				 String cdPoolName = String.valueOf(data.getPoolName());
-				 if(cdPoolName != null && !"".equals(cdPoolName.trim()) && cdPoolName.equalsIgnoreCase("RNAM_CAC")) {
+				 if(StringUtils.isNotBlank(cdPoolName) && cdPoolName.equalsIgnoreCase("RNAM_CAC")) {
 					 data.setEriproSubCD("RNAM_CAC");
 					 //System.out.println("poolName "+poolName);
 				 }
@@ -67,34 +72,40 @@ public class ResourceUtilizationParserService {
 		 return filteredBaseDatas;
 	}
 	
-	
+	/*  Grouping data by mapping list of ResourceUtilizationBaseData objects against any of the 5 SubCD types.We are fetching the eriproSubCd from the base data 
+	 *list and mapping it against the sub cd type from the map generated through another function gropuByEriproSubCDAndSubCdTypeMap()
+	 * Once we are getting the epri pro sub cd type for an entity we are grouping base data as per the subCD type    */
 	public Map<String, List<ResourceUtilizationBaseData>> groupResourceUtilizationBaseDataByEriproSubCD(List<ResourceUtilizationBaseData> baseDatas) {
-		Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = new HashMap<String, List<ResourceUtilizationBaseData>>();
+		Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = new LinkedHashMap<String, List<ResourceUtilizationBaseData>>();
 		Map<String, String> eriproSubCDTypeMap = gropuByEriproSubCDAndSubCdTypeMap();
-		//System.out.println(eriproSubCDTypeMap);
+		System.out.println(eriproSubCDTypeMap);
 		for(ResourceUtilizationBaseData data : baseDatas) {
 			String eriproSubCD = String.valueOf(data.getEriproSubCD());
 			//System.out.println(eriproSubCD);
-			if(eriproSubCD != null && !"".equals(eriproSubCD.trim())) {
+			if(StringUtils.isNotBlank(eriproSubCD)) {
 				String eriproSubCdType = eriproSubCDTypeMap.get(eriproSubCD);
-				if(eriproSubCDGroupMap.get(eriproSubCdType) != null) {
-					eriproSubCDGroupMap.get(eriproSubCdType).add(data);
-				} else {
-					List<ResourceUtilizationBaseData> list = new ArrayList<ResourceUtilizationBaseData>();
-					list.add(data);
-					eriproSubCDGroupMap.put(eriproSubCdType, list);
-					
+				if(StringUtils.isNotBlank(eriproSubCdType)) {
+					if(eriproSubCDGroupMap.get(eriproSubCdType) != null) {
+						eriproSubCDGroupMap.get(eriproSubCdType).add(data);
+					} else {
+						List<ResourceUtilizationBaseData> list = new ArrayList<ResourceUtilizationBaseData>();
+						list.add(data);
+						eriproSubCDGroupMap.put(eriproSubCdType, list);
+					}
 				}
 			}
 		}
-		return eriproSubCDGroupMap;
+		//System.out.println("eriproSubCDGroupMap : "+eriproSubCDGroupMap);
+		ApplicationUtil applicationUtil = new ApplicationUtil();
+		Map<String, List<ResourceUtilizationBaseData>> eriproSubCDSortedGroupMap = applicationUtil.sortedData(eriproSubCDGroupMap);
+		return eriproSubCDSortedGroupMap;
 	}
 	
 	public Map<String, Map<String, Double>> groupResourceUtilizationBaseDataByYear(Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap) {
 		Map<String, Map<String, Double>> eriproSubCDGroupTypeMap = new HashMap<String, Map<String, Double>>();
 		Set<String> list = eriproSubCDGroupMap.keySet();
 		for(String key : list) {
-			if(key != null && !"".equals(key.trim())) {
+			if(StringUtils.isNotBlank(key)) {
 				List<ResourceUtilizationBaseData> datas = eriproSubCDGroupMap.get(key);
 				for(ResourceUtilizationBaseData data : datas) {
 					Double targetHours = (Double)data.getTargetHours();
@@ -120,10 +131,12 @@ public class ResourceUtilizationParserService {
 	
 	public Map<MonthSubCdKey, Map<String, Double>> groupResourceUtilizationBaseDataByMonth(Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap) {
 		
-		Map<MonthSubCdKey, Map<String, Double>> monthSubCdSubCdTypeKeyMap = new HashMap<MonthSubCdKey, Map<String, Double>>();
+		Map<MonthSubCdKey, Map<String, Double>> monthSubCdSubCdTypeKeyMap = new LinkedHashMap<MonthSubCdKey, Map<String, Double>>();
 		Map<String, String> eriproSubCDAndSubCdTypeMap =  gropuByEriproSubCDAndSubCdTypeMap();
-		for(String subCd : eriproSubCDGroupMap.keySet()) {
-			if(subCd != null && !"".equals(subCd.trim())) {
+		List<String> eriproSubCDList = new ArrayList<String>(eriproSubCDGroupMap.keySet());
+		Collections.sort(eriproSubCDList);
+		for(String subCd : eriproSubCDList) {
+			if(StringUtils.isNotBlank(subCd)) {
 				List<ResourceUtilizationBaseData> list = eriproSubCDGroupMap.get(subCd);
 				for(ResourceUtilizationBaseData data : list) {
 					if(data.getEriproSubCD() != null && String.valueOf(data.getEriproSubCD()) != null && !"".equals(String.valueOf(data.getEriproSubCD()).trim())) {
@@ -151,9 +164,10 @@ public class ResourceUtilizationParserService {
 	
 	public Map<String, Map<String, Double>> groupResourceUtilizationBaseDataByMonthAndSubCdType(Map<MonthSubCdKey, Map<String, Double>> monthSubCdSubCdTypeKeyMap, String subCd) {
 		
-		Map<String, Map<String, Double>> monthAndSubCdTypeMap = new HashMap<String, Map<String, Double>>();
-		
-		for(MonthSubCdKey MonthSubCdKey : monthSubCdSubCdTypeKeyMap.keySet()) {
+		Map<String, Map<String, Double>> monthAndSubCdTypeMap = new LinkedHashMap<String, Map<String, Double>>();
+		ApplicationUtil applicationUtil = new ApplicationUtil();
+		List<MonthSubCdKey> monthSubCdSubCdTypeSortedKeyList = applicationUtil.sortedByMonthData(monthSubCdSubCdTypeKeyMap.keySet());
+		for(MonthSubCdKey MonthSubCdKey : monthSubCdSubCdTypeSortedKeyList) {
 			if(subCd.equalsIgnoreCase(MonthSubCdKey.getSubCdType())) {
 				//MonthSubCdTypeKey key = new MonthSubCdTypeKey(MonthSubCdKey.getMonth(), MonthSubCdKey.getSubCd());
 				Map<String, Double> targetRecordedHoursSubCdMap = monthSubCdSubCdTypeKeyMap.get(MonthSubCdKey);
@@ -216,7 +230,8 @@ public class ResourceUtilizationParserService {
 	
 	
 	
-	
+	/*  Here we are grouping different eripro subCDs of m&a into 
+	 any of the 5 subCD types */
 
 	public Map<String, String> gropuByEriproSubCDAndSubCdTypeMap() {
 		Map<String, String> map = new HashMap<String, String>();
@@ -237,7 +252,7 @@ public class ResourceUtilizationParserService {
 		}
 		return map;
 	}
-	
+	/* reading from excel file using apache poi Api */
 	private List<ResourceUtilizationBaseData> readResourceUtilizationBaseDataFromExcelFile(String excelFilePath) throws IOException {
 	    List<ResourceUtilizationBaseData> baseDatas = new ArrayList<ResourceUtilizationBaseData>();
 	    FileInputStream inputStream = new FileInputStream(new File(excelFilePath));
@@ -253,17 +268,24 @@ public class ResourceUtilizationParserService {
 	    }*/
 	   
 	    while (iterator.hasNext()) {
+	    	ResourceUtilizationBaseData baseData = new ResourceUtilizationBaseData();
 	        Row nextRow = iterator.next();
+	        int rowNo = nextRow.getRowNum();
+	        if(rowNo == 0) {
+            	System.out.println("rowNo  "+rowNo);
+                continue; //just skip the rows if row number is 0 or 1
+               }
 	        Iterator<Cell> cellIterator = nextRow.cellIterator();
-	        ResourceUtilizationBaseData baseData = new ResourceUtilizationBaseData();
+	       // ResourceUtilizationBaseData baseData = new ResourceUtilizationBaseData();
 	 
 	        while (cellIterator.hasNext()) {
 	            Cell nextCell = cellIterator.next();
-	            int rowIndex = nextCell.getRow().getRowNum();
+	            //int rowIndex = nextCell.getRow().getRowNum();
 	            //System.out.println("rowIndex  "+rowIndex);
-	            if(rowIndex==0) {
+	           /* if(rowIndex == 0) {
+	            	System.out.println("rowIndex  "+rowIndex);
 	                continue; //just skip the rows if row number is 0 or 1
-	               }
+	               }*/
 	            int columnIndex = nextCell.getColumnIndex();
 	 
 	            switch (columnIndex) {
@@ -507,7 +529,10 @@ public class ResourceUtilizationParserService {
 	 
 	 
 	        }
-	        baseDatas.add(baseData);
+	        if(baseData != null) {
+	        	//System.out.println(baseData);
+		        baseDatas.add(baseData);
+	        }
 	    }
 	 
 	    //workbook.close();
@@ -516,7 +541,7 @@ public class ResourceUtilizationParserService {
 	    //System.out.println(baseDatas.size());
 	    return baseDatas;
 	}
-	
+	  /* checking if its type is that of a proper excel file  */
 	private Workbook getWorkbook(FileInputStream inputStream, String excelFilePath)
 	        throws IOException {
 	    Workbook workbook = null;
@@ -531,7 +556,8 @@ public class ResourceUtilizationParserService {
 	 
 	    return workbook;
 	}
-	
+	/* getting the cell value of the cell passed as 
+	 * argument as per the datatype */
 	private Object getCellValue(Cell cell) {
 	    switch (cell.getCellType()) {
 	    case Cell.CELL_TYPE_STRING:
@@ -546,7 +572,7 @@ public class ResourceUtilizationParserService {
 	 
 	    return null;
 	}
-	
+	/* returns month;if its a single digit 0 is appended in the beginning  */
 	private String getMonthWithPrefix(int month) {
 		if(month < 10) {
 			return "0"+month;
@@ -565,28 +591,35 @@ public class ResourceUtilizationParserService {
     return counter.getSeq();
   }*/
 	
-	public List<JobStageDTO> getJobStageWiseHoursCalculation() throws Throwable {
+	/*    */
+	
+	
+	public List<JobStageDTO> getJobStageWiseHoursCalculation(Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap, String jobStage) throws Throwable {
 		List<JobStageDTO> dtos = new ArrayList<JobStageDTO>();
 		
 		ApplicationUtil applicationUtil = new ApplicationUtil();
-		String excelFilePath = applicationUtil.getFileName();
-		
-		List<ResourceUtilizationBaseData> baseDatas = parse(excelFilePath);
-		
-		//Map<String, String> map =  resourceUtilizationParserService.gropuByEriproSubCDAndSubCdTypeMap();
-		//System.out.println(map);
-		
-		List<ResourceUtilizationBaseData> filteredBaseDatas = filterDataRNAMCAC(baseDatas);
-		Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = groupResourceUtilizationBaseDataByEriproSubCD(filteredBaseDatas);
-		
-		
-		Map<MonthCdKey,Double> map = groupResourceUtilizationBaseDataByEriproCDMonthJs(eriproSubCDGroupMap, "Job stage 4");
+		Map<MonthCdKey, Map<String, Double>> map = groupResourceUtilizationBaseDataByEriproCDMonthJs(eriproSubCDGroupMap, jobStage);
+		Map<MonthCdKey, Map<String, Double>> subCdWiseTargetRecortedHoursMap = applicationUtil.getSubCdWiseTargetRecortedHours(eriproSubCDGroupMap);
 
 		for(MonthCdKey  monthCdKey : map.keySet()) { 
 			JobStageDTO jobStageDTO = new JobStageDTO();  
 			jobStageDTO.setCd(monthCdKey.getDomain());
 			jobStageDTO.setMonth(monthCdKey.getMonth());
-			jobStageDTO.setTargetHours(map.get(monthCdKey));
+			
+			Map<String, Double> targetRecordedHoursMap = map.get(monthCdKey);
+			
+			jobStageDTO.setTargetHours(targetRecordedHoursMap.get("targetHours"));
+			jobStageDTO.setRecordedHours(targetRecordedHoursMap.get("recordedHours"));
+			
+			
+			MonthCdKey key = new MonthCdKey();
+			key.setDomain(monthCdKey.getDomain());
+			key.setMonth(monthCdKey.getMonth());
+			Map<String, Double> totalTargetRecordedHoursMap = subCdWiseTargetRecortedHoursMap.get(key);
+			jobStageDTO.setTargetHours(totalTargetRecordedHoursMap.get("targetHours"));
+			
+			Double percentage = ( (targetRecordedHoursMap.get("recordedHours"))/(totalTargetRecordedHoursMap.get("targetHours")) )*100;
+			jobStageDTO.setPercentage(percentage);
 			dtos.add(jobStageDTO);
 		}
 		return dtos;
@@ -598,51 +631,47 @@ public class ResourceUtilizationParserService {
 	/* ***************Newly Written Code ****************** */
 	// key as CD and is vales list of ResourceUtilizationBaseData
 	
-	public Map<MonthCdKey,Double> groupResourceUtilizationBaseDataByEriproCDMonthJs(Map<String,List<ResourceUtilizationBaseData>> CdMap,String JobStage)
+	public Map<MonthCdKey, Map<String, Double>> groupResourceUtilizationBaseDataByEriproCDMonthJs(Map<String,List<ResourceUtilizationBaseData>> cdMap, 
+			String jobStage)
 	{
-		Map<MonthCdKey,Double> CdMonthTargetHoursMap=new HashMap<MonthCdKey,Double>();
-		Set<String> CdGroups=CdMap.keySet();
-		if(CdGroups!=null && !CdGroups.isEmpty())
+		Map<MonthCdKey, Map<String, Double>> cdMonthTargetHoursMap = new LinkedHashMap<MonthCdKey, Map<String, Double>>();
+		Set<String> cdGroups= cdMap.keySet();
+		List<String> cdGroupsList = new ArrayList<String>(cdGroups);
+		Collections.sort(cdGroupsList);
+		if(cdGroupsList != null && !cdGroupsList.isEmpty())
 		{
-			for(String CdGroup :CdGroups)
+			for(String cdGroup :cdGroupsList)
 			{
-				List<ResourceUtilizationBaseData> domainValuesList=CdMap.get(CdGroup);
+				List<ResourceUtilizationBaseData> domainValuesList=cdMap.get(cdGroup);
 				
 				if(domainValuesList!=null && !domainValuesList.isEmpty())
 				{
-					for(ResourceUtilizationBaseData DomainValue :domainValuesList)
+					for(ResourceUtilizationBaseData domainValue :domainValuesList)
 					{
-						
-						
-						if(JobStage.equalsIgnoreCase(String.valueOf(DomainValue.getGlobalJobStage())))
-						{
+						if(jobStage.equalsIgnoreCase(String.valueOf(domainValue.getGlobalJobStage()))) {
 						MonthCdKey month_cd_key=new MonthCdKey();
-						month_cd_key.setDomain(CdGroup);
-						month_cd_key.setMonth(DomainValue.getMonth());
-						if(CdMonthTargetHoursMap.get(month_cd_key)!=null)
-						{
-							Double tempRecordedHours=CdMonthTargetHoursMap.get(month_cd_key);
-							tempRecordedHours=tempRecordedHours+(Double)DomainValue.getTargetHours();
-							CdMonthTargetHoursMap.put(month_cd_key,tempRecordedHours);
-							
+						month_cd_key.setDomain(cdGroup);
+						month_cd_key.setMonth(domainValue.getMonth());
+						if(cdMonthTargetHoursMap.get(month_cd_key) != null) {
+							Map<String, Double> targetRecordedHoursMap = cdMonthTargetHoursMap.get(month_cd_key);
+							Double targetHoursD = targetRecordedHoursMap.get("targetHours") + (Double)domainValue.getTargetHours();
+							Double recordedHoursD = targetRecordedHoursMap.get("recordedHours") + (Double)domainValue.getTotalBillableHours();
+							targetRecordedHoursMap.put("targetHours", targetHoursD);
+							targetRecordedHoursMap.put("recordedHours", recordedHoursD);
+						} else {
+							Map<String, Double> map = new HashMap<String, Double>();
+							map.put("targetHours", (Double)domainValue.getTargetHours());
+							map.put("recordedHours", (Double)domainValue.getTotalBillableHours());
+							cdMonthTargetHoursMap.put(month_cd_key, map);
+							}
 						}
-						
-						else
-						{
-							Double tempRecordedHours=(Double) DomainValue.getTargetHours();
-							CdMonthTargetHoursMap.put(month_cd_key,tempRecordedHours);
-						}
-					}
-						
-						
-						
 					}
 				}
 			}
+			
 		
 		}
-		return CdMonthTargetHoursMap;
-		
+		return cdMonthTargetHoursMap;
 	}
 	
 	

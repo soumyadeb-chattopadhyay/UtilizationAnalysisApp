@@ -25,7 +25,11 @@
 				<li style="font-size: 18px"><a href='<c:out value="${monthlyReportUrl}"/>'><fmt:message key="welcome.header.monthly.report"/></a></li>
 				<li style="font-size: 18px"><a href='<c:out value="${eriproSubDomainReportUrl}"/>'><fmt:message key="welcome.header.eripro.sub.domain.report"/></a></li>
 				<li style="font-size: 18px"><a href='<c:out value="${eriproSubCdTypePercentageReportUrl}"/>'><fmt:message key="welcome.header.eripro.subCdType.percentage.report"/></a></li>
-				<li style="font-size: 18px"><a href='<c:out value="${jobStageReportUrl}"/>'><fmt:message key="welcome.header.jobStage.report"/></a></li>
+				<li style="font-size: 18px"><fmt:message key="welcome.header.jobStage.report"/>
+				<a href='<c:out value="${jobStageReportUrl}"/>?jobStage=Job stage 4'>JS4</a>
+				<a href='<c:out value="${jobStageReportUrl}"/>?jobStage=Job stage 5'>JS5</a>
+				<a href='<c:out value="${jobStageReportUrl}"/>?jobStage=Job stage 6'>JS6</a>
+				</li>
 			</ul>
 			<br class="clear" />
 		</div>

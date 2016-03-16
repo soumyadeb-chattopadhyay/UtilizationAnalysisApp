@@ -8,9 +8,9 @@
 	<head>
 		<title><fmt:message key="welcome.header.jobStage.report"/></title>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-		<link href="${pageContext.request.contextPath }/resources/css/displaytag.css" media="screen" rel="stylesheet" type="text/css" />
-		<link href="${pageContext.request.contextPath }/resources/css/layout.css" rel="stylesheet" type="text/css" />
-		<link href="${pageContext.request.contextPath }/resources/css/style.css" rel="stylesheet" type="text/css" />
+		<link href="${pageContext.request.contextPath}/resources/css/displaytag.css" media="screen" rel="stylesheet" type="text/css" />
+		<link href="${pageContext.request.contextPath}/resources/css/layout.css" rel="stylesheet" type="text/css" />
+		<link href="${pageContext.request.contextPath}/resources/css/style.css" rel="stylesheet" type="text/css" />
 	
 	
 	
@@ -30,10 +30,12 @@
 		<div id="maincontainer">
 			<h2><fmt:message key="welcome.header.jobStage.report"/></h2>
 			<div id="tablediv">
-				<display:table name="jobStageDTOs" class="report" decorator="org.displaytag.decorator.TotalTableDecorator" export="true">
-				    <display:column property="cd"/>
-					<display:column property="month"/>
-					<display:column property="targetHours" />
+				<display:table name="jobStageDTOs" class="report" decorator="org.displaytag.decorator.TotalTableDecorator" export="true" requestURI="${jobStageReportUrl}">
+				    <display:column property="cd" title="Sub Cd" group="1" />
+					<display:column property="month" title="Month"/>
+					<display:column property="targetHours" title="Target Hours"/>
+					<display:column property="recordedHours" title="Recorded Hours"/>
+					<display:column property="percentage" format="{0,number,0.00} %"/>
 		  		</display:table>
 			</div>
 			<br class="clear" />

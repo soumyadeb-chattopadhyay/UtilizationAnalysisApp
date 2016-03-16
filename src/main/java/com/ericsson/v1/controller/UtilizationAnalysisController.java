@@ -112,9 +112,19 @@ public class UtilizationAnalysisController {
 	 
 	 @RequestMapping(value = "/jobStageReportUrl", method = RequestMethod.GET)
 	    public String getJobStageReport(Model model, HttpServletRequest request, HttpServletResponse response) throws Throwable {
-		 
-		 List<JobStageDTO> jobStageDTOs = resourceUtilizationParserService.getJobStageWiseHoursCalculation();
-		 model.addAttribute("jobStageDTOs", jobStageDTOs);
+	 		String jobStage = request.getParameter("jobStage");
+			System.out.println("jobStage : "+jobStage);
+			
+			ApplicationUtil applicationUtil = new ApplicationUtil();
+			String excelFilePath = applicationUtil.getFileName();
+			
+			List<ResourceUtilizationBaseData> baseDatas = resourceUtilizationParserService.parse(excelFilePath);
+			
+			List<ResourceUtilizationBaseData> filteredBaseDatas = resourceUtilizationParserService.filterDataRNAMCAC(baseDatas);
+			Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = resourceUtilizationParserService.groupResourceUtilizationBaseDataByEriproSubCD(filteredBaseDatas);
+			
+			 List<JobStageDTO> jobStageDTOs = resourceUtilizationParserService.getJobStageWiseHoursCalculation(eriproSubCDGroupMap, jobStage);
+			 model.addAttribute("jobStageDTOs", jobStageDTOs);
 		 
 	     return "jobStageReport";
 	 }

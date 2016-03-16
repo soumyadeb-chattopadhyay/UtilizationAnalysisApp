@@ -8,9 +8,9 @@
 	<head>
 		<title><fmt:message key="welcome.header.eripro.subCdType.percentage.report"/></title>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-		<link href="${pageContext.request.contextPath }/resources/css/displaytag.css" media="screen" rel="stylesheet" type="text/css" />
-		<link href="${pageContext.request.contextPath }/resources/css/layout.css" rel="stylesheet" type="text/css" />
-		<link href="${pageContext.request.contextPath }/resources/css/style.css" rel="stylesheet" type="text/css" />
+		<link href="${pageContext.request.contextPath}/resources/css/displaytag.css" media="screen" rel="stylesheet" type="text/css" />
+		<link href="${pageContext.request.contextPath}/resources/css/layout.css" rel="stylesheet" type="text/css" />
+		<link href="${pageContext.request.contextPath}/resources/css/style.css" rel="stylesheet" type="text/css" />
 	
 	
 	
@@ -33,6 +33,8 @@
 				<display:table name="cdTypeMonthPercentageDTOs" class="report" decorator="org.displaytag.decorator.TotalTableDecorator" export="true" requestURI="${eriproSubCdTypePercentageReportUrl}">
 				    <display:column property="subCdType" group="1" />
 					<display:column property="month"/>
+					<display:column property="targetHours"/>
+					<display:column property="recordedHours"/>
 					<display:column property="percentage" format="{0,number,0.00} %" headerClass="r" class="r" total="false" />
 		  		</display:table>
 			</div>

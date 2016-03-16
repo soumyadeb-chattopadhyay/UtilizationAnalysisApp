@@ -30,10 +30,10 @@
 		<div id="maincontainer">
 			<h2><fmt:message key="welcome.header.eripro.sub.domain.report"/></h2>
 			<div id="tablediv">
-				<display:table name="cdTypeDTOs" class="simple nocol" defaultsort="1" decorator="org.displaytag.decorator.TotalTableDecorator" export="true">
+				<display:table name="cdTypeDTOs" class="simple nocol" defaultsort="1" decorator="org.displaytag.decorator.TotalTableDecorator" export="true" requestURI="${eriproSubDomainReportUrl}">
 				    <display:column property="subCdType" group="1" />
 					<display:column property="subCd" />
-					<display:column property="month" sortable="true"/>
+					<display:column property="month"/>
 				   
 				    <display:column property="targetHours" format="{0,number,0.00}" headerClass="r" class="r" total="true" />
 				    <display:column property="recordedHours" format="{0,number,0.00}" headerClass="r" class="r" total="true" />

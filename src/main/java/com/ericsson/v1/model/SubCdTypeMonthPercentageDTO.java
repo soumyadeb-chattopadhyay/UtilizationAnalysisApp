@@ -9,6 +9,8 @@ public class SubCdTypeMonthPercentageDTO implements Serializable {
 	private String subCdType;
 	private String month;
 	private Double percentage;
+	 private Double targetHours;
+	 private Double recordedHours;
 	
 	
 	public String getSubCdType() {
@@ -29,8 +31,17 @@ public class SubCdTypeMonthPercentageDTO implements Serializable {
 	public void setPercentage(Double percentage) {
 		this.percentage = percentage;
 	}
-	
-	
-	
+	public Double getTargetHours() {
+		return targetHours;
+	}
+	public void setTargetHours(Double targetHours) {
+		this.targetHours = targetHours;
+	}
+	public Double getRecordedHours() {
+		return recordedHours;
+	}
+	public void setRecordedHours(Double recordedHours) {
+		this.recordedHours = recordedHours;
+	}
 	
 }

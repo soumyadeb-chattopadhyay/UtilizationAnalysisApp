@@ -34,10 +34,10 @@ public class Application {
 			
 			List<ResourceUtilizationBaseData> filteredBaseDatas = resourceUtilizationParserService.filterDataRNAMCAC(baseDatas);
 			Map<String, List<ResourceUtilizationBaseData>> eriproSubCDGroupMap = resourceUtilizationParserService.groupResourceUtilizationBaseDataByEriproSubCD(filteredBaseDatas);
-			
-			System.out.println(eriproSubCDGroupMap.keySet());
+			resourceUtilizationParserService.groupResourceUtilizationBaseDataByEriproCDMonthJs(eriproSubCDGroupMap, "Job stage 4");
+			//System.out.println(eriproSubCDGroupMap.keySet());
 			//resourceUtilizationParserService.persist(baseDatas);
-			System.out.println(context);
+			//System.out.println(context);
 			//System.out.println(utilizationParserServiceRepository.findAll());
 			
 			//System.out.println(PropertyUtil.getInstance().getValue("eripro.sub.cd.SDP"));

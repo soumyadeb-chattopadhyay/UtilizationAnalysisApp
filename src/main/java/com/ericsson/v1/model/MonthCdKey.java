@@ -4,6 +4,7 @@ public class MonthCdKey {
 	
 	private String domain;
 	private String month;
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
